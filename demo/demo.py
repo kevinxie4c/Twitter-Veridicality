@@ -90,10 +90,10 @@ class LRmulticlass(object):
                 self.model = lrmulti
         
         def Predict(self, jsonInstance):
-		fsvoc = open("vocab_train.save", 'rb')
-		self.vocab = pickle.load(fsvoc)
-		self.vocab.Lock()
-		#print self.vocab.GetVocabSize()
+                fsvoc = open("vocab_train.save", 'rb')
+                self.vocab = pickle.load(fsvoc)
+                self.vocab.Lock()
+                #print self.vocab.GetVocabSize()
                 return self.model.predict(self.json2Vector(jsonInstance).reshape(1,-1))
         
         def PredictProba(self, jsonInstance):
@@ -296,9 +296,9 @@ def getsegments(tweet, annots, tag, lower=False, getIndices=True):
             start = None
     if start != None:
         if getIndices:
-            result.append((' '.join(tweet[start:i]), (start, i)))
+            result.append((' '.join(tweet[start:i+1]), (start, i+1)))
         else:
-            result.append(' '.join(tweet[start:i]))
+            result.append(' '.join(tweet[start:i+1]))
     if lower:
         if getIndices:
             result = [(x[0].lower(), x[1]) for x in result]
@@ -503,11 +503,11 @@ def GetLLda():
 
 def recomputeScores():
     for item in scores:
-	computedScores[item] = (scores[item]+ 1)/((scores[item] + len(scores))*1.0)
+        computedScores[item] = (scores[item]+ 1)/((scores[item] + len(scores))*1.0)
 
 def displayScores():
     for item in computedScores:
-	print str(item) + " : " + str(computedScores[item])
+        print str(item) + " : " + str(computedScores[item])
 
 
 posTagger = pos_tagger_stdin.PosTagger()
@@ -596,11 +596,13 @@ completeTrack.strip()
 
 
 print completeTrack, formedQueries
-iterator = twitter_stream.statuses.filter(track=completeTrack, language="en")
+#iterator = twitter_stream.statuses.filter(track=completeTrack, language="en")
+jsonfile = open('../data/result.txt', 'r')
+iterator = jsonfile.readlines()
 
 for tweet in iterator:
-    jdata = json.dumps(tweet)
-    ptweet = json.loads(jdata)
+    #jdata = json.dumps(tweet)
+    ptweet = json.loads(tweet)
     #create a list with just the important fields of the tweet + metadata
     doi = []
     if not 'text' in ptweet:
@@ -609,15 +611,15 @@ for tweet in iterator:
         #print ptweet['id']
         #print ptweet['text']
         doi.append(event)
-	foundEntity = False
+        foundEntity = False
         for item in contenders:
             if item.lower() in ptweet['text'].lower():
                 doi.append(item)
                 print "Found entity"
-		foundEntity = True
+                foundEntity = True
                 break
-	if not foundEntity:
-	    continue
+        if not foundEntity:
+            continue
         doi.append(ptweet['text'])
         doi.append(ptweet['created_at'])
         doi.append(ptweet['user']['screen_name'])
@@ -627,7 +629,7 @@ for tweet in iterator:
         #fpt = open("tweet.txt", 'w')
         print doi[2]
         #print type(doi[2])
-       # fpt.writelines(str(doi[2].decode('utf-8')))
+        #fpt.writelines(str(doi[2].decode('utf-8')))
         #os.system('cd ../Twitter-NLP/twitter_nlp/')
         #os.system('export TWITTER_NLP=./')
         #os.system('cd -')
@@ -772,11 +774,11 @@ for tweet in iterator:
             if ent1.lower() in mtweetWords[i].strip().lower():
                 mtweetWords[i] = "TARGET1"
                 tweetTags2[i] = "MOD"
-	    else:
-		for oppent in contenders:
-		    if oppent.lower() in mtweetWords[i].strip().lower():
-			mtweetWords[i] = "OPPONENT"
-			tweetTags2[i] = "MOD"
+            else:
+                for oppent in contenders:
+                    if oppent.lower() in mtweetWords[i].strip().lower():
+                        mtweetWords[i] = "OPPONENT"
+                        tweetTags2[i] = "MOD"
         mtweetWords = reinstateHT(mtweetWords, tweetWords2)
 
         segments = getsegments(mtweetWords, tweetTags2, "ENTITY")
@@ -803,58 +805,58 @@ for tweet in iterator:
                         segment = None
 
         print "Final  tweet and tags"
-	# add START and END tags
-	mtweetWords.insert(0, '<S>')
-	mtweetWords.append('</S>')
-	print tweetText
+        # add START and END tags
+        mtweetWords.insert(0, '<S>')
+        mtweetWords.append('</S>')
+        print tweetText
         print mtweetWords
-	tweetTags2.insert(0, 'START')
-	tweetTags2.append('END')
+        tweetTags2.insert(0, 'START')
+        tweetTags2.append('END')
         print tweetTags2
         remainingData = []
         remainingData.append(event)
         remainingData.append(doi[1])
        
-	#generate features using feature code
-	tweetFeatures = {}
-	keyword = "win"
-	computeEntityFeaturesTarget1(mtweetWords, tweetTags2, tweetFeatures)
-	computePairFeatures("TARGET1", keyword, mtweetWords, tweetTags2, tweetFeatures)
-	computeOpponentFeatures(mtweetWords, tweetTags2, tweetFeatures)
-	computeOpponentKeywordFeatures("OPPONENT", keyword, mtweetWords, tweetTags2, tweetFeatures)
-	EndsWithExclamation(mtweetWords, tweetTags2, tweetFeatures)
+        #generate features using feature code
+        tweetFeatures = {}
+        keyword = "win"
+        computeEntityFeaturesTarget1(mtweetWords, tweetTags2, tweetFeatures)
+        computePairFeatures("TARGET1", keyword, mtweetWords, tweetTags2, tweetFeatures)
+        computeOpponentFeatures(mtweetWords, tweetTags2, tweetFeatures)
+        computeOpponentKeywordFeatures("OPPONENT", keyword, mtweetWords, tweetTags2, tweetFeatures)
+        EndsWithExclamation(mtweetWords, tweetTags2, tweetFeatures)
         EndsWithQuestion(mtweetWords, tweetTags2, tweetFeatures)
         EndsWithPeriod(mtweetWords, tweetTags2, tweetFeatures)
         containsQuestion(mtweetWords, tweetTags2, tweetFeatures)
         containsExclamation(mtweetWords, tweetTags2, tweetFeatures)
-	#entityHasNegation("TARGET1", keyword, mtweetWords, tweetTags2, tweetFeatures)
-	distanceToKwd("TARGET1", "OPPONENT", keyword, mtweetWords, tweetTags2, tweetFeatures)
-	print "generated features"
-	print tweetFeatures
-	fpdp = open("tweet1.txt", 'w')
-	fpdp.writelines(str(tweetText.encode('utf-8')) + "\n")
-	fpdp.close()
-	os.system("bash tweeboparser/TweeboParser/run.sh tweet1.txt")
-	storedDatadp = []
-	fpdp = open("tweeboparser/TweeboParser/tweet1.txt.predict", 'r')
-	for line in fpdp.readlines():
-	    storedDatadp.append(line.split('\t'))
-	dpParse = []
-	for item in storedDatadp:
-	    if len(item) == 1:
-		break
-	    else:
-		wordData = []
-		wordData.append(item[1])
-		wordData.append(item[-2])
-		wordData.append(item[3])
-		dpParse.append(wordData)
-	#now, we can use dpParse, event and entity
-	# code will be similar to nevent_creatematrix.py
-	length = len(dpParse)
-	edge = np.zeros((length+1, length+1))
-	direction = np.zeros((length+1, length+1))
-	for i in range(len(dpParse)):
+        #entityHasNegation("TARGET1", keyword, mtweetWords, tweetTags2, tweetFeatures)
+        distanceToKwd("TARGET1", "OPPONENT", keyword, mtweetWords, tweetTags2, tweetFeatures)
+        print "generated features"
+        print tweetFeatures
+        fpdp = open("tweet1.txt", 'w')
+        fpdp.writelines(str(tweetText.encode('utf-8')) + "\n")
+        fpdp.close()
+        os.system("bash tweeboparser/TweeboParser/run.sh tweet1.txt")
+        storedDatadp = []
+        fpdp = open("tweeboparser/TweeboParser/tweet1.txt.predict", 'r')
+        for line in fpdp.readlines():
+            storedDatadp.append(line.split('\t'))
+        dpParse = []
+        for item in storedDatadp:
+            if len(item) == 1:
+                break
+            else:
+                wordData = []
+                wordData.append(item[1])
+                wordData.append(item[-2])
+                wordData.append(item[3])
+                dpParse.append(wordData)
+        #now, we can use dpParse, event and entity
+        # code will be similar to nevent_creatematrix.py
+        length = len(dpParse)
+        edge = np.zeros((length+1, length+1))
+        direction = np.zeros((length+1, length+1))
+        for i in range(len(dpParse)):
             curWordIndex = i+1
             edgeIndex = int(dpParse[i][1])
             if edgeIndex <= 0:
@@ -864,24 +866,24 @@ for tweet in iterator:
                 edge[edgeIndex][curWordIndex] =1
                 direction[curWordIndex][edgeIndex] = 2
                 direction[edgeIndex][curWordIndex] = 3
-	#doi[1] is the entity
-	curEntity = ""
-	if len(doi[1].strip().split(' ')) > 1:
+        #doi[1] is the entity
+        curEntity = ""
+        if len(doi[1].strip().split(' ')) > 1:
             curEntity = str(doi[1].strip().split(' ')[-1].lower())
         else:
             curEntity = str(doi[1].strip().lower())
-	startIndices = []
-	storePaths = []
-	for i,attr in enumerate(dpParse):
+        startIndices = []
+        storePaths = []
+        for i,attr in enumerate(dpParse):
             if curEntity in attr[0].lower():#and attr[-1] == "^":
                 startIndices.append(i+1)
-	for idx in startIndices:
+        for idx in startIndices:
             visit = set()
             path = ""
             DFSwithsource(edge, direction, visit, path, dpParse, idx, "win", storePaths)
-	#print "store paths in between"
-	#print storePaths
-	for item in contenders:
+        #print "store paths in between"
+        #print storePaths
+        for item in contenders:
             if not item.strip().lower() == curEntity.strip().lower():
                 print item
                 #Then it is an opponent entity
@@ -897,33 +899,33 @@ for tweet in iterator:
                     visit = set()
                     path = ""
                     DFSwithsourceopponent(edge, direction, visit, path, dpParse, idx, "win", storePaths)
-	visit = set()
+        visit = set()
         danglingNegation(edge, visit, dpParse, "win", storePaths)
-	print "parse tree features"
-	print storePaths
-	for item in storePaths:
-	    if not item in tweetFeatures:
-		tweetFeatures[item] = 1
-	print "final features"
-	print tweetFeatures
-	fpmodelSaved = open('train.save', 'rb')
-	lrModel = pickle.load(fpmodelSaved)
-	resultVer = []
-	probabilitiesVer = []
-	threshold = 0.64
-	resultVer.append(lrModel.Predict(tweetFeatures))
-	probabilitiesVer.append(lrModel.PredictProba(tweetFeatures))
-	if resultVer[0][0] == 1:
-		print "predicted negative"
-	elif resultVer[0][0] == 2:
-		print "predicted negative"
-	else:
-		print "predicted positive"
-	#print "predicted label" + str(resultVer[0])
-	print "predicted probability :" + str(probabilitiesVer[0][0][resultVer[0]-1])
-	if resultVer[0] == 3 and probabilitiesVer[0][0][resultVer[0]-1] > threshold:
-	    print "Found positive veridicality for " + str(doi[1])
-	    scores[item] = scores[item] + 1
-	    recomputeScores()
-	print "Predictions for winners in %"
-	displayScores()
+        print "parse tree features"
+        print storePaths
+        for item in storePaths:
+            if not item in tweetFeatures:
+                tweetFeatures[item] = 1
+        print "final features"
+        print tweetFeatures
+        fpmodelSaved = open('train.save', 'rb')
+        lrModel = pickle.load(fpmodelSaved)
+        resultVer = []
+        probabilitiesVer = []
+        threshold = 0.64
+        resultVer.append(lrModel.Predict(tweetFeatures))
+        probabilitiesVer.append(lrModel.PredictProba(tweetFeatures))
+        if resultVer[0][0] == 1:
+                print "predicted negative"
+        elif resultVer[0][0] == 2:
+                print "predicted negative"
+        else:
+                print "predicted positive"
+        #print "predicted label" + str(resultVer[0])
+        print "predicted probability :" + str(probabilitiesVer[0][0][resultVer[0]-1])
+        if resultVer[0] == 3 and probabilitiesVer[0][0][resultVer[0]-1] > threshold:
+            print "Found positive veridicality for " + str(doi[1])
+            scores[doi[1].strip()] = scores[doi[1].strip()] + 1
+            recomputeScores()
+        print "Predictions for winners in %"
+        displayScores()
