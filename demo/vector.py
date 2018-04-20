@@ -572,9 +572,9 @@ CONSUMER_SECRET = 'YOUR-CONSUMER-SECRET'
 xmatInit = False
 idfile = open('../data/id.txt', 'w')
 
-for event in ['elections', 'oscar_ba', 'oscar_bas', 'oscar_bp']:
-		jsonfile = open('../data/event/' + event + '_json.txt', 'r')
-		eventfile = open('../data/event/' + event + '.txt', 'r')
+for event_t in ['elections', 'oscar_ba', 'oscar_bas', 'oscar_bp']:
+		jsonfile = open('../data/event/' + event_t + '_json.txt', 'r')
+		eventfile = open('../data/event/' + event_t + '.txt', 'r')
 		count = 0
 		event = ""
 		contenders = []
